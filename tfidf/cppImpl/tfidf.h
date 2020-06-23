@@ -7,12 +7,15 @@
 using namespace std;
 // TODO: Replace all maps with google dense hash map.
 // TODO: all strings need to replaced with UT8 characters of different length.
+// TODO: Implement getDatasetAPI. which dataset to be used?
+// TODO: Merge with preproces API.
+// TODO: Build auxillary datastructure.
 
 /* TF-IDF Data structures:
 1.TF/IDF structure : <doc-id (uint32) : term-id (uint32) > => <term count (uint32) > // The denominator N needed for the logN will be  kept elsewhere?
 2. Terms index: <term-id (uint32)> => <term (utf-8 256 characters)>
 3. Documents index: <doc-id (uint32)> => <doc name (utf-8 1024 characters)>
-4 .Location of Terms in a document <doc-id (uint32):  term-id (uint32)> => < (uint32)s fashioned as a string > 
+4 <TO_DO>Location of Terms in a document <doc-id (uint32):  term-id (uint32)> => < (uint32)s fashioned as a string > 
 */
 
 
