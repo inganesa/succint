@@ -1,7 +1,7 @@
 CC=g++
 CFLAGS=-I. -std=c++11 
-DEPS = index.h tfidf.h
-OBJS = test.o index.o
+DEPS = tfidf.h buildIndex.h manifest.h preprocess.h merge.h
+OBJS = test.o manifest.o buildIndex.o
 
 %.o: %.cc $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)

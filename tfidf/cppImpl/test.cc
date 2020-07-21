@@ -1,16 +1,30 @@
-#include <index.h>
+#include <buildIndex.h>
 #include <iostream>
 
 using namespace std;
 
-int  main() {
-  Index index(0);
-  string baseFolderName = "stories";
-  index.build(baseFolderName);
-  string qs = "Polymetals are alloys of metals that have polymer composites";
-  vector<Doc> docs = index.query(qs, 3);
-  for (auto d : docs) {
-    cout << "Document: " << d << endl;
+
+void indexBuilderHandler(string manifestFilePath) {
+  Index index;
+
+  if (index.init(manifestFilePath)) {
+    cout << "Index init failed" << endl;
+    return;
   }
+
+  if (!index.build()) {
+    cout << "Index build failed" << endl;
+    return;
+  }
+
+  if (index.purge()) {
+    cout << "Index purge failed" << endl;
+    return;
+  }
+  index.tearDown();
+}  
+
+int  main() {
+  indexBuilderHandler("foo.xml");
   return 0;
 }
