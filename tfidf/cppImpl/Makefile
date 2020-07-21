@@ -1,13 +1,13 @@
-CC=g++
-CFLAGS=-I. -std=c++11 
+CXX = g++
+CXXFLAGS = -I. -std=c++11 
 DEPS = tfidf.h buildIndex.h manifest.h preprocess.h merge.h
 OBJS = test.o manifest.o buildIndex.o
 
 %.o: %.cc $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CXX) -c -o $@ $< $(CXXFLAGS)
 
 test: $(OBJS)
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CXX) -o $@ $^ $(CXXFLAGS)
 
 clean: 
 	rm *.o test

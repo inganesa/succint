@@ -112,8 +112,8 @@ Index::purge()
   for ( unsigned i = 0; i < _termInfoMap.bucket_count(); ++i) {
     for ( auto it = _termInfoMap.begin(i); it!= _termInfoMap.end(i); ++it )
       //serialize here into K objects
-      //cout << it->first << endl;
-      cout << i << endl;
+      cout << it->first << endl;
+    //cout << i << endl;
   }
   return true;
 }
