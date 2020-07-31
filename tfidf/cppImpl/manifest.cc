@@ -22,7 +22,7 @@ Manifest::init(string path) {
     // Parse the XML into the property tree.
     pt::read_xml(path, tree);
 
-    BOOST_FOREACH(pt::ptree::value_type &v, tree.get_child("Keys")) {
+    BOOST_FOREACH(pt::ptree::value_type &v, tree.get_child("document.Keys")) {
       // The data function is used to access the data stored in a node.
       string keyname = v.first.data();
       string keyval = v.second.data();
@@ -32,8 +32,8 @@ Manifest::init(string path) {
       _fPaths.push_back(key);
     }
 
-    _count = tree.get("Count", 0);
-    _startId = tree.get("StartID", 0);
+    _count = tree.get("document.Count", 0);
+    _startId = tree.get("document.StartID", 0);
 }
 
 bool
@@ -73,7 +73,7 @@ FileData::init() {
   string filePath = _key.val;
   _fs.open(filePath, fstream::in);
   if(!_fs.is_open()) {
-    cout << "Could not open file: "<< _fs << endl;
+    cout << "Could not open file: "<< filePath << endl;
     return false;
   }
   return true;
