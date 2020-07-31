@@ -1,5 +1,7 @@
-<Keys>
-  <file>foo.txt</file>
+<document>
+  <Keys>
+    <file>foo.txt</file>
+  </Keys>
   <Count>1</Count>
   <StartID>1</StartID>
-</Keys>
+</document>
