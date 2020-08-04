@@ -12,7 +12,7 @@ class Preprocess {
   
   //TBD: to be implemented.
   bool hasTerm() {}
-  void getNextTerm(Term &term, TermLoc &loc) {}
+  void getNextTerm(TermID &id, TermLoc &loc) {}
 
   ~Preprocess() {}
 

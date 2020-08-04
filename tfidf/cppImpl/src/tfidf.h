@@ -7,6 +7,9 @@
 #include <utility> //for std::pair
 #include <stdint.h> //for uint32_t
 #include <vector>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/vector.hpp>
+#include <ostream>
 
 using namespace std;
 
@@ -71,31 +74,74 @@ struct TermInfo {
   DocID docId; //global doc id + chunk id
   TermFreq count;
   vector<TermLoc> locations;
+
+  friend class boost::serialization::access;
+  template<class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar & docId;
+    ar & count;
+    ar & locations;
+  }
 };
 
 typedef unordered_map<TermID, vector<TermInfo>> GlobalDS;
 
+#define  MAX_BUCKETS_PER_OBJECT 10
+#define BUCKET_HDR_SIZE sizeof(BucketHeaderInfo) * MAX_BUCKETS_PER_OBJECT
 
-/************ Manifest File DS **************/
-enum DataKeyType {
-  file     = 0,
-  object   = 1,
-  c2cRepo  = 2
+// I may need  __attribute__((packed)) for all structures. Need to check.
+
+/*struct ObjectHeaderInfo {
+  uint32_t count:16; // no of buckets
+  // uint32_t length; // length of header
+  ostream& operator << (ostream& os, const ObjectHeaderInfo& rhs) {
+    os << rhs.count;
+    return os;
+  }
+  };*/
+
+struct BucketHeaderInfo {
+  uint32_t id;     // bucket id
+  uint32_t count; // no of terms
+  uint32_t offset; // offset to term Header
+  uint32_t length; // length of term Header infos; // is this needed?
 };
 
-struct DataKey {
-  DataKeyType type;
-  string val;
-DataKey() : type(DataKeyType::file), val("") {}
-DataKey(DataKeyType type, string val) : type(type), val(val) {}
-};
-  
-#define CHUNKSIZE 8096
+inline ostream& operator << (ostream& os, const BucketHeaderInfo& rhs) {
+  os << rhs.id;
+  os << rhs.count;
+  os << rhs.offset;
+  os << rhs.length;
+  return os;
+}
 
-struct ChunkData {
-  ChunkID id;
-  uint32_t size;
-  char data[CHUNKSIZE];
+struct BucketHeader {
+  //ObjectHeaderInfo hdr;
+  BucketHeaderInfo bslots[MAX_BUCKETS_PER_OBJECT];
+};
+
+struct TermHeaderInfo {
+  uint32_t id; // term id
+  uint32_t count; // no of documents.
+  uint32_t offset; // offset to term info
+  uint32_t length; // length of term info
+};
+
+inline ostream& operator << (ostream& os, const TermHeaderInfo& rhs) {
+  os << rhs.id;
+  os << rhs.count;
+  os << rhs.offset;
+  os << rhs.length;
+  return os;
+}
+
+// each bucket will point to one or more TermHeader infos.
+struct TermHeader {
+  TermHeaderInfo tslots[0];
+};
+
+struct TermData {
+  TermInfo tdata[0];
 };
 
 #endif //TFIDF_H

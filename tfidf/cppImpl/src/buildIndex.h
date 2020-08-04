@@ -19,8 +19,9 @@ class Index {
   /*** private member functions ***/
   void updateLocalMap(TermID id, TermLoc loc);
   void updateGlobalMap(DocID id);
-  TermID getTermId(Term term);
   DocID getDocId(DocID localid, DocID chunkid);
+  uint32_t getBucketHdrOffset(uint32_t idx);
+  uint32_t getTermHdrOffset(uint32_t idx);
 
   /**** private data members ****/
   Manifest _manifest;

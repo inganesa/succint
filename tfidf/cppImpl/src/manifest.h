@@ -10,20 +10,44 @@
 
 using namespace std;
 
+/************ Manifest File DS **************/
+enum DataKeyType {
+  file     = 0,
+  object   = 1,
+  c2cRepo  = 2
+};
+
+struct DataKey {
+  DataKeyType type;
+  string val;
+DataKey() : type(DataKeyType::file), val("") {}
+DataKey(DataKeyType type, string val) : type(type), val(val) {}
+};
+  
+#define CHUNKSIZE 8096
+
+struct ChunkData {
+  ChunkID id;
+  uint32_t size;
+  char data[CHUNKSIZE];
+};
+
+
 /*
  * Manifest file layout example:
- * <Keys>
- *    <file> foo.txt </file>
- *    <object> object id </object>
- *    <c2cRepo> c2c repo file </c2cRepo>
- * </Keys>
- * <Count> *no of docs* </Count>
- * <StartID> *Doc Id of starting document </StartID>
- *
+ * <document>
+ *   <Keys>
+ *     <file> foo.txt </file>
+ *     <object> object id </object>
+ *     <c2cRepo> c2c repo file </c2cRepo>
+ *   </Keys>
+ *   <Count> *no of docs* </Count>
+ *   <StartID> *Doc Id of starting document </StartID>
+ * </document>
  */
 class Manifest {
  public:
-  Manifest() {}
+ Manifest():i(0) {}
 
   void init(string path);
   bool hasNext();

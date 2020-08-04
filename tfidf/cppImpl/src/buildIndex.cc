@@ -1,14 +1,16 @@
 #include "buildIndex.h"
 
 #include <preprocess.h>
+#include <util.h>
 
 #include <math.h>
 #include <iostream> //std::cout
 #include <algorithm> //std::sort
 #include <fstream> //std::ifstream
 #include <boost/property_tree/exceptions.hpp>
+#include <boost/archive/text_oarchive.hpp>
 
-/* Private Methods */
+/******************** Private Methods ********************/
 void
 Index::updateLocalMap(TermID id, TermLoc loc) {
 
@@ -31,11 +33,6 @@ Index::updateGlobalMap(DocID id) {
   }
   _termInfoPerDocMap.clear();
 }
- 
-TermID
-Index::getTermId(Term term) {
-  //TBD lookup global map tbd.
-}
 
 DocID
 Index::getDocId(DocID localid, DocID chunkid) {
@@ -43,7 +40,8 @@ Index::getDocId(DocID localid, DocID chunkid) {
   return id;
 }
 
-/* Public Methods */
+
+/*********** Public Methods **************/
 bool
 Index::init(string manifestFilepath) {
   try
@@ -78,13 +76,10 @@ Index::build()
       Preprocess p(data);
 
       while (p.hasTerm()) {
-	Term term;
 	TermID id;
 	TermLoc loc;
 
-	p.getNextTerm(term, loc);
-	id = getTermId(term);
-
+	p.getNextTerm(id, loc);
 	updateLocalMap(id, loc);
 
       } // Finished processing all terms in a chunk.
@@ -105,15 +100,57 @@ Index::build()
   return true;
 } //End of buildIndex
 
+
 bool
 Index::purge()
 {
-  // TODO: Serialize 
+
+  std::fstream fs("serialized_index.txt");
+  uint32_t length, offset;
+
+  // write bucket headers
   for ( unsigned i = 0; i < _termInfoMap.bucket_count(); ++i) {
-    for ( auto it = _termInfoMap.begin(i); it!= _termInfoMap.end(i); ++it )
-      //serialize here into K objects
-      cout << it->first << endl;
-    //cout << i << endl;
+    BucketHeaderInfo bhdr;
+    bhdr.id = i;
+    bhdr.count = _termInfoMap.bucket_size(i);
+    // bucketheaderinfo offset and length  will be filled when term header is written.
+    fs << bhdr;
+  }
+
+  // write terms header.
+  for ( unsigned i = 0; i < _termInfoMap.bucket_count(); ++i) {
+
+    vector<TermID> keys;
+    for (auto it = _termInfoMap.begin(i); it != _termInfoMap.end(i); ++it) {
+       keys.push_back(it->first);
+    }
+    sort(keys.begin(), keys.end());
+
+    for (auto it = keys.begin(); it != keys.end(); ++it) {
+      TermHeaderInfo thdr = {};
+      TermID id = *it;
+      thdr.id = id;
+      thdr.count = _termInfoMap[id].size();
+      // TermHeaderInfo offset and length will be filled while writing terms data.
+      fs << thdr;
+    }
+
+    length = (uint32_t)fs.tellp() - offset;
+    util::updateBucketHdrInfo(fs, i, offset, length);
+
+    // write terms data
+    unsigned j = 0;
+    for (auto it = keys.begin(); it != keys.end(); ++it) {
+      offset = fs.tellp();
+      TermID id = *it;
+  
+      // create and open a character archive for output
+      boost::archive::text_oarchive oa(fs);
+      oa << _termInfoMap[id];
+      length = (uint32_t)fs.tellp() - offset;
+      util::updateTermHdrInfo(fs, j, offset, length);
+    }
+
   }
   return true;
 }
