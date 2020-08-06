@@ -1,5 +1,4 @@
 #include "buildIndex.h"
-
 #include <preprocess.h>
 #include <util.h>
 
@@ -109,13 +108,15 @@ Index::purge()
   uint32_t length, offset;
 
   // write bucket headers
+  BucketHeader bhdr;
+  // split into multiple objects.
+  bhdr.hdr.count = _termInfoMap.bucket_count();
   for ( unsigned i = 0; i < _termInfoMap.bucket_count(); ++i) {
-    BucketHeaderInfo bhdr;
-    bhdr.id = i;
-    bhdr.count = _termInfoMap.bucket_size(i);
+    bhdr.bslots[i].id = i;
+    bhdr.bslots[i].count = _termInfoMap.bucket_size(i);
     // bucketheaderinfo offset and length  will be filled when term header is written.
-    fs << bhdr;
   }
+  fs << bhdr;
 
   // write terms header.
   for ( unsigned i = 0; i < _termInfoMap.bucket_count(); ++i) {

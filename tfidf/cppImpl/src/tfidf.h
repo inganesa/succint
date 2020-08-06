@@ -25,27 +25,6 @@ using namespace std;
 4 Location of Terms in a document <doc-id (uint32):  term-id (uint32)> => < (uint32)s fashioned as a string > 
 */
 
-
-/*struct pair_hash
-{
-  template <class T1, class T2>
-    std::size_t operator() (const std::pair<T1, T2> &pair) const
-  {
-    return std::hash<T1>()(pair.first) ^ std::hash<T2>()(pair.second);
-  }
-};
-
-typedef string Filepath;
-typedef string Title;
-typedef unordered_map<Filepath, Title> Dataset;
-typedef unordered_map<Term, TermFreq> TermCountMap;
-typedef unordered_map<DocID, Doc> DocIdx;
-typedef unordered_map<Term, TermID> TermIdx;
-typedef unordered_map<std::pair<DocID,TermID>, TermFreq, pair_hash> DocMetadata;
-typedef unordered_map<TermID, unordered_set<DocID>> PostingList;
-*/
-
-
 typedef uint32_t TermID;
 typedef uint32_t DocID;
 typedef uint32_t ChunkID;
@@ -55,52 +34,22 @@ typedef string Doc;
 typedef uint16_t TermLoc;
 
 
-/************** Incore TF structure *****************/
-struct TermInfoPerDoc {
-  TermFreq count;
-  vector<TermLoc> locations; //size is == count
-TermInfoPerDoc() : count(0) {}
-  void addInfo(TermLoc loc) {
-    count++;
-    locations.push_back(loc);
-  }
-};
-
-typedef unordered_map<TermID, TermInfoPerDoc> LocalDS;
-
-
 /****************** TF data structure to be serialized *******************/
-struct TermInfo {
-  DocID docId; //global doc id + chunk id
-  TermFreq count;
-  vector<TermLoc> locations;
-
-  friend class boost::serialization::access;
-  template<class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar & docId;
-    ar & count;
-    ar & locations;
-  }
-};
-
-typedef unordered_map<TermID, vector<TermInfo>> GlobalDS;
 
 #define  MAX_BUCKETS_PER_OBJECT 10
 #define BUCKET_HDR_SIZE sizeof(BucketHeaderInfo) * MAX_BUCKETS_PER_OBJECT
 
-// I may need  __attribute__((packed)) for all structures. Need to check.
-
-/*struct ObjectHeaderInfo {
+struct __attribute__((packed)) ObjectHeaderInfo {
   uint32_t count:16; // no of buckets
   // uint32_t length; // length of header
-  ostream& operator << (ostream& os, const ObjectHeaderInfo& rhs) {
-    os << rhs.count;
-    return os;
-  }
-  };*/
+};
 
-struct BucketHeaderInfo {
+inline ostream& operator<< (ostream& os, const ObjectHeaderInfo& rhs) {
+  os  << rhs.count;
+  return os;
+}
+
+struct __attribute__((packed)) BucketHeaderInfo {
   uint32_t id;     // bucket id
   uint32_t count; // no of terms
   uint32_t offset; // offset to term Header
@@ -115,12 +64,19 @@ inline ostream& operator << (ostream& os, const BucketHeaderInfo& rhs) {
   return os;
 }
 
-struct BucketHeader {
-  //ObjectHeaderInfo hdr;
+struct __attribute__((packed)) BucketHeader {
+  ObjectHeaderInfo hdr;
   BucketHeaderInfo bslots[MAX_BUCKETS_PER_OBJECT];
 };
 
-struct TermHeaderInfo {
+inline ostream& operator << (ostream& os, const BucketHeader& rhs) {
+  os << rhs.hdr;
+  for (auto v : rhs.bslots) {
+    os << v;
+  }
+}
+
+struct __attribute__((packed)) TermHeaderInfo {
   uint32_t id; // term id
   uint32_t count; // no of documents.
   uint32_t offset; // offset to term info
@@ -136,8 +92,23 @@ inline ostream& operator << (ostream& os, const TermHeaderInfo& rhs) {
 }
 
 // each bucket will point to one or more TermHeader infos.
-struct TermHeader {
+struct __attribute__((packed)) TermHeader {
   TermHeaderInfo tslots[0];
+};
+
+struct TermInfo {
+  DocID docId; //global doc id + chunk id
+  TermFreq count;
+  vector<TermLoc> locations;
+TermInfo(DocID id, TermFreq f, vector<TermLoc> &loc) : docId(id), count(f), locations(loc) {}
+TermInfo() : docId(0), count(0) {}
+  friend class boost::serialization::access;
+  template<class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar & docId;
+    ar & count;
+    ar & locations;
+  }
 };
 
 struct TermData {

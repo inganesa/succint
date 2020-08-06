@@ -15,6 +15,23 @@ class Index {
   void tearDown();
   ~Index () {}
 
+  /************** Incore TF structure *****************/
+  struct TermInfoPerDoc {
+    TermFreq count;
+    vector<TermLoc> locations; //size is == count
+  TermInfoPerDoc() : count(0) {}
+    void addInfo(TermLoc loc) {
+      count++;
+      locations.push_back(loc);
+    }
+  };
+
+  typedef unordered_map<TermID, TermInfoPerDoc> LocalDS;
+  typedef unordered_map<TermID, vector<TermInfo>> GlobalDS;
+  
+  //public function for test purposes.
+  GlobalDS& getGlobalMap() { return _termInfoMap; }
+
  private:
   /*** private member functions ***/
   void updateLocalMap(TermID id, TermLoc loc);
